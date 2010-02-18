@@ -20,13 +20,22 @@ def main():
     max_results = int(opts.max_results)
 
     cf = configdict.ConfigDict('google.ini')
+
+    # ugly hack courtesy:
+    # http://code.google.com/p/gdata-python-client/issues/detail?id=230
     client = ContactsService(additional_headers={
-        'GData-Version': '2'})
+        'GData-Version': '3'})
+
+    # authenticate to google.
     client.ClientLogin(cf['google']['username'], cf['google']['password'])
 
+    # get the list of contact groups.
     groups = client.GetGroupsFeed()
     selected_groups = []
 
+    # build a list of available groups.  massage the "System group:"
+    # names to be more useful.  Filter groups based on -g command
+    # line option, if necessary.
     for entry in groups.entry:
         gname = entry.title.text
         if gname.startswith('System Group: '):
@@ -40,6 +49,7 @@ def main():
 
     addresses={}
 
+    # build list of addresses for each group
     for entry in selected_groups:
         addresses[entry.title.text] = []
         query = ContactsQuery(group = entry.id.text)
@@ -49,6 +59,7 @@ def main():
             for email in contact.email:
                 addresses[entry.title.text].append(email.address)
 
+    # build filter feed
     feed = filters.FilterFeed()
     for group, addrs in addresses.items():
         label = group
@@ -61,6 +72,7 @@ def main():
             label=label,
             ))
 
+    # output xml
     print feed
 
 if __name__ == '__main__':
