@@ -2,6 +2,7 @@ import os
 import sys
 import optparse
 
+import filters
 import configdict
 from gdata.contacts.service import ContactsService, ContactsQuery
 
@@ -27,12 +28,11 @@ def main():
 
     for entry in groups.entry:
         gname = entry.title.text
-        gname_short = gname
         if gname.startswith('System Group: '):
-            gname_short = gname[14:]
+            gname = gname[14:]
+            entry.title.text = gname
 
-        if opts.group and not (
-                gname in opts.group or gname_short in opts.group):
+        if opts.group and not  gname in opts.group:
             continue
 
         selected_groups.append(entry)
@@ -48,10 +48,15 @@ def main():
             for email in contact.email:
                 addresses[entry.title.text].append(email.address)
 
+    feed = filters.FilterFeed()
     for group, addrs in addresses.items():
-        print '#', group
-        print 'from:(%s)' % '|'.join(addrs)
-        print
+        feed.append(filters.FilterEntry(
+            'from:(%s)' % '|'.join(addrs),
+            title=group,
+            label=group,
+            ))
+
+    print feed
 
 if __name__ == '__main__':
     main()
