@@ -11,6 +11,7 @@ def parse_args():
     p.add_option('-f', '--config', default='google.ini')
     p.add_option('-g', '--group', action='append')
     p.add_option('-m', '--max-results', default='200')
+    p.add_option('-l', '--lowercase-labels', action='store_true')
     return p.parse_args()
 
 def main():
@@ -50,10 +51,14 @@ def main():
 
     feed = filters.FilterFeed()
     for group, addrs in addresses.items():
+        label = group
+        if opts.lowercase_labels:
+            label = label.lower()
+
         feed.append(filters.FilterEntry(
             'from:(%s)' % '|'.join(addrs),
             title=group,
-            label=group,
+            label=label,
             ))
 
     print feed
